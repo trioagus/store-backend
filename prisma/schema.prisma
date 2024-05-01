@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart            Cart[]
+  shippingAddress ShippingAddress[]
+  wishlsit        Wishlist[]
+  productReview   productReview[]
+
+  @@map("users")
+}
+
+model Category {
+  id   String @id @default(cuid())
+  name String
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  price       Int
+  categoryId  String
+  description String
+  stock       Int
+  image       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category      Category        @relation(fields: [categoryId], references: [id])
+  cartItem      CartItem[]
+  wishlsit      Wishlist[]
+  productReview productReview[]
+
+  @@map("products")
+}
+
+model CartItem {
+  id         String @id @default(cuid())
+  productId  String
+  quantity   Int
+  totalPrice Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+  cart    Cart[]
+
+  @@map("cart_items")
+}
+
+model Cart {
+  id         String @id @default(cuid())
+  userId     String
+  cartItemId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User       @relation(fields: [userId], references: [id])
+  cartItem CartItem   @relation(fields: [cartItemId], references: [id])
+  checkout Checkout[]
+
+  @@map("carts")
+}
+
+model ShippingAddress {
+  id         String @id @default(cuid())
+  address    String
+  city       String
+  country    String
+  postalCode String
+  userId     String
+
+  user     User       @relation(fields: [userId], references: [id])
+  checkout Checkout[]
+
+  @@map("shipping_addresses")
+}
+
+model Shipping {
+  id       String @id @default(cuid())
+  city     String
+  regional String
+  fee      Int
+
+  checkout Checkout[]
+
+  @@map("shippings")
+}
+
+model Checkout {
+  id                String @id @default(cuid())
+  cartId            String
+  shippingAddressId String
+  shippingId        String
+  quantity          Int
+  totalPrice        Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart            Cart            @relation(fields: [cartId], references: [id])
+  shippingAddress ShippingAddress @relation(fields: [shippingAddressId], references: [id])
+  shipping        Shipping        @relation(fields: [shippingId], references: [id])
+
+  @@map("checkouts")
+}
+
+model Wishlist {
+  id        String  @id @default(cuid())
+  userId    String
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@map("wishlists")
+}
+
+model productReview {
+  id        String  @id @default(cuid())
+  userId    String
+  productId String
+  review    String
+  rating    Int
+  product   Product @relation(fields: [productId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@map("product_reviews")
+}
+
+enum Role {
+  admin
+  user
+}
