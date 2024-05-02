@@ -1,56 +1,53 @@
 import { prisma } from "../application/db";
+import { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
 import { ProductRequest } from "../types/productRequest";
-import { productValidation } from "../validation/product-validation";
 
 export class ProductService {
-  static async CreateProduct(productData: ProductRequest) {
-    const { name, price, categoryId, description, stock, image } = productData;
-
-    const validation = productValidation.parse(productData);
-    if (!validation) {
-      throw new Error(`Data produk tidak valid`);
+  static async CreateProduct(req: Request, res: Response) {
+    if (!req.file) {
+      return res.status(400).json({ message: "File tidak ditemukan" });
     }
 
     try {
-      const createdProduct = await prisma.product.create({
-        data: {
-          name,
-          price,
-          categoryId,
-          description,
-          stock,
-          image,
-        },
+      const data: ProductRequest = {
+        name: req.body.name,
+        price: parseInt(req.body.price),
+        description: req.body.description,
+        image: req.file.filename,
+        categoryId: req.body.categoryId,
+        stock: parseInt(req.body.stock),
+      };
+
+      const product = await prisma.product.create({
+        data,
       });
-      return createdProduct;
+
+      res.status(201).json({
+        code: 201,
+        message: "Product created successfully",
+        data: product,
+      });
     } catch (error) {
-      console.error(error);
-      throw new Error("Terjadi kesalahan saat membuat produk.");
+      console.error("Add Product Error:", error);
+      return res.status(500).send({
+        message: "Internal Server Error",
+      });
     }
   }
 
-  static async UpdateProduct(
-    id: string,
-    productData: ProductRequest,
-    newImage?: Express.Multer.File
-  ) {
-    const { name, price, categoryId, description, stock } = productData;
-
-    const validation = productValidation.parse(productData);
-    if (!validation) {
-      throw new Error(`Data produk tidak valid`);
-    }
+  static async UpdateProduct(req: Request, res: Response) {
+    const { id } = req.params;
+    const { name, price, description, categoryId, stock } = req.body;
 
     try {
       let imageData: string | undefined = undefined;
 
-      if (newImage) {
-        imageData = newImage.filename;
-
+      if (req.file) {
+        imageData = req.file.filename;
         const oldProduct = await prisma.product.findUnique({
-          where: { id },
+          where: { id: String(id) },
           select: { image: true },
         });
 
@@ -70,43 +67,58 @@ export class ProductService {
       }
 
       const updatedProduct = await prisma.product.update({
-        where: { id },
+        where: { id: String(id) },
         data: {
           name,
-          price,
-          categoryId,
+          price: parseInt(price),
           description,
-          stock,
+          categoryId,
+          stock: parseInt(stock),
           ...(imageData && { image: imageData }),
         },
       });
-      return updatedProduct;
+
+      res.status(200).json({
+        code: 200,
+        message: "Product berhasil diupdate",
+        data: updatedProduct,
+      });
     } catch (error) {
-      console.error(error);
-      throw new Error("Terjadi kesalahan saat mengupdate produk.");
+      console.error("gagal update:", error);
+      return res.status(500).send({
+        message: "Internal Server Error",
+      });
     }
   }
 
   static async GetProducts(): Promise<any> {
     try {
       const baseUrl = process.env.IMAGE_BASE_URL;
-      const products = await prisma.product.findMany();
+      const productsWithCategory = await prisma.product.findMany({
+        include: {
+          category: true,
+        },
+      });
 
-      const productsWithImage = products.map((product: any) => ({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        categoryId: product.categoryId,
-        description: product.description,
-        stock: product.stock,
-        image: product.image,
-        imageUrl: baseUrl + product.image,
-      }));
+      const productsWithImageAndCategory = productsWithCategory.map(
+        (product: any) => ({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          categoryName: product.category.name,
+          description: product.description,
+          stock: product.stock,
+          image: product.image,
+          imageUrl: baseUrl + product.image,
+        })
+      );
 
-      return productsWithImage;
+      return productsWithImageAndCategory;
     } catch (error) {
       console.error(error);
-      throw new Error("Terjadi kesalahan saat mengambil produk.");
+      throw new Error(
+        "Terjadi kesalahan saat mengambil produk dengan kategori."
+      );
     }
   }
 
@@ -137,15 +149,30 @@ export class ProductService {
       throw new Error("Terjadi kesalahan saat mengambil produk.");
     }
   }
+
   static async DeleteProduct(id: string) {
     try {
+      const product = await prisma.product.findUnique({
+        where: { id: String(id) },
+        select: { image: true },
+      });
+  
+      if (product && product.image) {
+        const imagePath = path.join(__dirname, "..", "..", "public", "uploads", product.image);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath); 
+        }
+      }
+  
       const deletedProduct = await prisma.product.delete({
         where: { id: String(id) },
       });
+  
       return deletedProduct;
     } catch (error) {
       console.error(error);
       throw new Error("Terjadi kesalahan saat menghapus produk.");
     }
   }
+  
 }

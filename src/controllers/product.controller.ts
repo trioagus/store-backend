@@ -3,34 +3,23 @@ import { Request, Response } from "express";
 
 export class ProductController {
   async createproduct(req: Request, res: Response) {
-    const productData = req.body;
-
     try {
-      const createdProduct = await ProductService.CreateProduct(productData);
-      res.status(201).json(createdProduct);
+      await ProductService.CreateProduct(req, res);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Terjadi kesalahan saat membuat produk." });
     }
   }
-
   async updateproduct(req: Request, res: Response) {
     const productId = req.params.id;
-    const productData = req.body;
-
     try {
-      const updatedProduct = await ProductService.UpdateProduct(
-        productId,
-        productData
-      );
-      res.status(200).json(updatedProduct);
+      await ProductService.UpdateProduct(req, res);
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .json({ error: "Terjadi kesalahan saat memperbarui produk." });
+      res.status(500).json({ error: "Terjadi kesalahan saat mengupdate produk." });
     }
   }
+  
 
   async deleteproduct(req: Request, res: Response) {
     const productId = req.params.id;
