@@ -20,9 +20,7 @@ export class ProductService {
         stock: parseInt(req.body.stock),
       };
 
-      const product = await prisma.product.create({
-        data,
-      });
+      const product = await prisma.product.create({ data });
 
       res.status(201).json({
         code: 201,
@@ -105,7 +103,7 @@ export class ProductService {
           id: product.id,
           name: product.name,
           price: product.price,
-          categoryName: product.category.name,
+          categoryName: product.category ? product.category.name : "",
           description: product.description,
           stock: product.stock,
           image: product.image,
@@ -127,6 +125,9 @@ export class ProductService {
       const baseUrl = process.env.IMAGE_BASE_URL;
       const product = await prisma.product.findUnique({
         where: { id: String(id) },
+        include: {
+          category: true,
+        },
       });
 
       if (!product) {
@@ -137,12 +138,13 @@ export class ProductService {
         id: product.id,
         name: product.name,
         price: product.price,
-        categoryId: product.categoryId,
+        categoryName: product.category ? product.category.name : "",
         description: product.description,
         stock: product.stock,
         image: product.image,
         imageUrl: baseUrl + product.image,
       };
+
       return productWithImage;
     } catch (error) {
       console.error(error);
@@ -156,23 +158,29 @@ export class ProductService {
         where: { id: String(id) },
         select: { image: true },
       });
-  
+
       if (product && product.image) {
-        const imagePath = path.join(__dirname, "..", "..", "public", "uploads", product.image);
+        const imagePath = path.join(
+          __dirname,
+          "..",
+          "..",
+          "public",
+          "uploads",
+          product.image
+        );
         if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath); 
+          fs.unlinkSync(imagePath);
         }
       }
-  
+
       const deletedProduct = await prisma.product.delete({
         where: { id: String(id) },
       });
-  
+
       return deletedProduct;
     } catch (error) {
       console.error(error);
       throw new Error("Terjadi kesalahan saat menghapus produk.");
     }
   }
-  
 }
