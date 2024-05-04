@@ -7,6 +7,7 @@ import { productRouter } from "./product";
 import { cartRouter } from "./cart";
 import { shippingAddressRouter } from "./shippingAddress";
 import { shippingRouter } from "./shipping";
+import { productReviewRouter } from "./productReview";
 
 export const webRouter = express.Router();
 
@@ -17,4 +18,5 @@ webRouter.use("/product", productRouter);
 webRouter.use("/cart", cartRouter);
 webRouter.use("/shipping-address", shippingAddressRouter);
 webRouter.use("/shipping", shippingRouter);
+webRouter.use("/product-review", productReviewRouter);
 webRouter.use(errorMiddleware);
