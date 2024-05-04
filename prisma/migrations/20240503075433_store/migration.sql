@@ -27,20 +27,8 @@ CREATE TABLE `products` (
     `price` INTEGER NOT NULL,
     `categoryId` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NOT NULL,
-    `stock` VARCHAR(191) NOT NULL,
+    `stock` INTEGER NOT NULL,
     `image` VARCHAR(191) NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `cart_items` (
-    `id` VARCHAR(191) NOT NULL,
-    `productId` VARCHAR(191) NOT NULL,
-    `quantity` INTEGER NOT NULL,
-    `totalPrice` INTEGER NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -51,9 +39,11 @@ CREATE TABLE `cart_items` (
 CREATE TABLE `carts` (
     `id` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
-    `cartItemId` VARCHAR(191) NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
+    `productId` VARCHAR(191) NOT NULL,
+    `quantity` INTEGER NOT NULL,
+    `totalPrice` INTEGER NOT NULL,
+    `createdAt` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -84,6 +74,7 @@ CREATE TABLE `shippings` (
 CREATE TABLE `checkouts` (
     `id` VARCHAR(191) NOT NULL,
     `cartId` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
     `shippingAddressId` VARCHAR(191) NOT NULL,
     `shippingId` VARCHAR(191) NOT NULL,
     `quantity` INTEGER NOT NULL,
@@ -118,13 +109,7 @@ CREATE TABLE `product_reviews` (
 ALTER TABLE `products` ADD CONSTRAINT `products_categoryId_fkey` FOREIGN KEY (`categoryId`) REFERENCES `categories`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `cart_items` ADD CONSTRAINT `cart_items_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `carts` ADD CONSTRAINT `carts_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `carts` ADD CONSTRAINT `carts_cartItemId_fkey` FOREIGN KEY (`cartItemId`) REFERENCES `cart_items`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `carts` ADD CONSTRAINT `carts_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `shipping_addresses` ADD CONSTRAINT `shipping_addresses_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -137,6 +122,9 @@ ALTER TABLE `checkouts` ADD CONSTRAINT `checkouts_shippingAddressId_fkey` FOREIG
 
 -- AddForeignKey
 ALTER TABLE `checkouts` ADD CONSTRAINT `checkouts_shippingId_fkey` FOREIGN KEY (`shippingId`) REFERENCES `shippings`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `checkouts` ADD CONSTRAINT `checkouts_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `wishlists` ADD CONSTRAINT `wishlists_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

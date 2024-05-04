@@ -17,10 +17,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cart            Cart[]
   shippingAddress ShippingAddress[]
   wishlsit        Wishlist[]
   productReview   productReview[]
+  checkout        Checkout[]
 
   @@map("users")
 }
@@ -46,38 +46,23 @@ model Product {
   updatedAt   DateTime @updatedAt
 
   category      Category        @relation(fields: [categoryId], references: [id])
-  cartItem      CartItem[]
+  cart          Cart[]
   wishlsit      Wishlist[]
   productReview productReview[]
 
   @@map("products")
 }
 
-model CartItem {
+model Cart {
   id         String @id @default(cuid())
   productId  String
   quantity   Int
   totalPrice Int
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  product   Product   @relation(fields: [productId], references: [id])
 
-  product Product @relation(fields: [productId], references: [id])
-  cart    Cart[]
-
-  @@map("cart_items")
-}
-
-model Cart {
-  id         String @id @default(cuid())
-  userId     String
-  cartItemId String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user     User       @relation(fields: [userId], references: [id])
-  cartItem CartItem   @relation(fields: [cartItemId], references: [id])
   checkout Checkout[]
 
   @@map("carts")
@@ -111,6 +96,7 @@ model Shipping {
 model Checkout {
   id                String @id @default(cuid())
   cartId            String
+  userId            String
   shippingAddressId String
   shippingId        String
   quantity          Int
@@ -122,6 +108,7 @@ model Checkout {
   cart            Cart            @relation(fields: [cartId], references: [id])
   shippingAddress ShippingAddress @relation(fields: [shippingAddressId], references: [id])
   shipping        Shipping        @relation(fields: [shippingId], references: [id])
+  user            User            @relation(fields: [userId], references: [id])
 
   @@map("checkouts")
 }
